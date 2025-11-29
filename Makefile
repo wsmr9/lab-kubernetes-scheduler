@@ -9,7 +9,7 @@ create-cluster:
 
 build:
 	cd Polling-Scheduler && docker build -t $(APP-POLLING):latest .
-	cd ../Watch-Scheduler && docker build -t $(APP-WATCH):latest .
+	cd Watch-Scheduler && docker build -t $(APP-WATCH):latest .
 
 kind-load:
 	kind load docker-image $(APP-POLLING):latest --name $(KIND_CLUSTER)
