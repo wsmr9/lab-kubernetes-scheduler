@@ -41,5 +41,5 @@ logs:
 	kubectl -n kube-system logs deploy/my-scheduler -f
 
 taint-label:
-	kubectl taint nodes sched-lab-worker3 dedicated=prod:NoSchedule
-	kubectl label nodes sched-lab-worker3 env=prod
+	kubectl taint nodes sched-lab-worker3 environment=production:NoSchedule
+	kubectl label nodes sched-lab-worker3 environment=production
