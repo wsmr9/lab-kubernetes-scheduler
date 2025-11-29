@@ -19,10 +19,15 @@ def choose_node(api: client.CoreV1Api, pod) -> str:
     nodes = api.list_node().items
     pods = api.list_pod_for_all_namespaces().items
 
-    nodes = [ n for n in api.list_node().items if "env" in (n.metadata.labels or {}) and
-        n.metadata.labels["env"] == "prod"]
+    eligible_nodes = []
+    
+    for n in nodes:
+        if not node_tolerates_taints(n, pod):
+            continue       
+        if not node_matches_affinity(n, pod):
+            continue          
+        eligible_nodes.append(n)
 
-    eligible_nodes = [n for n in nodes if node_tolerates_taints(n, pod)]
     if not eligible_nodes:
         raise RuntimeError("No nodes available")
     min_cnt = math.inf
@@ -58,6 +63,44 @@ def node_tolerates_taints(node, pod):
             return False
     return True
 
+def node_matches_affinity(node, pod) -> bool:
+    
+    affinity = pod.spec.affinity
+    if not affinity or not affinity.node_affinity:
+        return True
+
+    node_affinity = affinity.node_affinity
+    
+    required = node_affinity.required_during_scheduling_ignored_during_execution
+    if required:
+        for term in required.node_selector_terms:
+            all_expressions_match = True
+            
+            for expression in term.match_expressions or []:
+                node_label_value = (node.metadata.labels or {}).get(expression.key)
+                operator = expression.operator
+                values = expression.values or []
+
+                match = False
+                
+                if operator == "In":
+                    match = node_label_value in values
+                elif operator == "NotIn":
+                    match = node_label_value not in values
+                elif operator == "Exists":
+                    match = expression.key in (node.metadata.labels or {})
+                elif operator == "DoesNotExist":
+                    match = expression.key not in (node.metadata.labels or {})
+                
+                if not match:
+                    all_expressions_match = False
+                    break  
+            
+            if all_expressions_match:
+                return True
+        return False
+    return True
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--scheduler-name", default="my-scheduler")
@@ -69,7 +112,7 @@ def main():
     print(f"[watch] scheduler starting… name={args.scheduler_name}")
     w = watch.Watch()
     # Stream Pod events and bind unscheduled Pods, also with request_timeout to avoid hanging indefinitely (polling interval).
-    for evt in w.stream(api.list_pod_for_all_namespaces, _request_timeout=60):
+    for evt in w.stream(api.list_pod_for_all_namespaces, _request_timeout=300):
         obj = evt['object']
         if obj is None or not hasattr(obj, 'spec'):
             continue
