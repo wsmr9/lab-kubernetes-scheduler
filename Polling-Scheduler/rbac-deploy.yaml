@@ -33,5 +33,5 @@ spec:
       serviceAccountName: my-scheduler
       containers:
       - name: scheduler
-        image: my-py-scheduler:latest
+        image: my-py-scheduler-polling:latest
         args: ["--scheduler-name","my-scheduler"]
