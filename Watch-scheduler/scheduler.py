@@ -111,16 +111,17 @@ def main():
 
     print(f"[watch] scheduler starting… name={args.scheduler_name}")
     w = watch.Watch()
-    # Stream Pod events and bind unscheduled Pods, also with request_timeout to avoid hanging indefinitely (polling interval).
     for evt in w.stream(api.list_pod_for_all_namespaces, _request_timeout=300):
         obj = evt['object']
         if obj is None or not hasattr(obj, 'spec'):
             continue
         if obj.spec.node_name is None and obj.spec.scheduler_name == args.scheduler_name:
-            node = choose_node(api, obj)
-            bind_pod(api, obj, node)
-            print(f"Bound by watch {obj.metadata.namespace}/{obj.metadata.name} -> {node}")
+            try:
+                node = choose_node(api, obj)
+                bind_pod(api, obj, node)
+                print(f"Bound by watch {obj.metadata.namespace}/{obj.metadata.name} -> {node}")
+            except RuntimeError as e:
+                print(f"Failed to schedule pod {obj.metadata.name}: {e}")
 
 if __name__ == "__main__":
     main()
- 
