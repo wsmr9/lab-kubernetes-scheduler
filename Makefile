@@ -1,4 +1,4 @@
-APP=my-py-scheduler
+APP-POLLING=my-py-scheduler-polling
 APP-WATCH=my-py-scheduler-watch
 KIND_CLUSTER=sched-lab
 
@@ -8,11 +8,11 @@ create-cluster:
 	kind create cluster --config kind-multi-node.yml --name $(KIND_CLUSTER)
 
 build:
-	cd Polling-Scheduler && docker build -t $(APP):latest .
+	cd Polling-Scheduler && docker build -t $(APP-POLLING):latest .
 	cd ../Watch-Scheduler && docker build -t $(APP-WATCH):latest .
 
 kind-load:
-	kind load docker-image $(APP):latest --name $(KIND_CLUSTER)
+	kind load docker-image $(APP-POLLING):latest --name $(KIND_CLUSTER)
 	kind load docker-image $(APP-WATCH):latest --name $(KIND_CLUSTER)
 
 deploy-poll:
