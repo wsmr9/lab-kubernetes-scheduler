@@ -34,4 +34,5 @@ spec:
       containers:
       - name: scheduler
         image: my-py-scheduler-polling:latest
+        imagePullPolicy: Never
         args: ["--scheduler-name","my-scheduler"]
