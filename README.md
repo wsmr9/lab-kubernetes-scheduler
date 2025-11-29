@@ -1,5 +1,5 @@
 # Alumnos
-- Ciprian, Stefanie
+- Cibrian, Stefanie
 - Moya, Wayner
 - Ruiz, Ana Pamela
 
